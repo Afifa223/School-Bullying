@@ -80,7 +80,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             try {
                 $stmt->execute();
+
                 $message = "Registration successful!";
+
+                $message = "Registration successful! You can login now.";
+
                 $message_type = "success";
                 $email_value = $first_value = $last_value = "";
             } catch (mysqli_sql_exception $e) {
@@ -117,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <?php if ($message): ?>
 <div class="alert <?php echo $message_type; ?>">
+<<<<<<< HEAD
 <?php echo htmlspecialchars($message); ?>
 </div>
 <?php endif; ?>
@@ -132,6 +137,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <label>Email</label>
 <input type="email" name="email" value="<?php echo htmlspecialchars($email_value); ?>" required>
 
+<?php echo $message; ?>
+</div>
+<?php endif; ?>
+
+<form method="POST">
+
+<label>First Name</label>
+<input type="text" name="first_name"
+value="<?php echo htmlspecialchars($first_value); ?>" required>
+
+<label>Last Name</label>
+<input type="text" name="last_name"
+value="<?php echo htmlspecialchars($last_value); ?>" required>
+
+<label>Email</label>
+<input type="email" name="email"
+value="<?php echo htmlspecialchars($email_value); ?>" required>
+
+
 <label>Password</label>
 <input type="password" name="password" required>
 
@@ -139,6 +163,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <input type="password" name="confirm_password" required>
 
 <button class="btn" type="submit">Create Account</button>
+<<<<<<< HEAD
 </form>
 <?php endif; ?>
 
@@ -147,6 +172,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 Back to Login
 </a>
 <?php endif; ?>
+
+
+</form>
+
+<div class="divider"><span>OR</span></div>
+
+<a class="btn-outline" href="login.php">Back to Login</a>
+
 
 </div>
 </div>
