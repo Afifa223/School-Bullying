@@ -2,7 +2,7 @@
 require_once "auth.php";
 require_role("student");
 
-$name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
+$name = current_user_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,13 +21,13 @@ $name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
   <div class="container nav-inner">
     <div class="brand">
       <span class="badge"></span>
-      <span>SafeSchool</span>
+      <span>SBMS Student Panel</span>
     </div>
     <div class="links">
-      <a href="#">Report</a>
-      <a href="#">Track</a>
-      <a href="#">Get Help</a>
-      <a href="#">Resources</a>
+      <a href="student_report.php">Report</a>
+      <a href="student_track.php">Track</a>
+      <a href="student_help.php">Get Help</a>
+      <a href="student_resources.php">Resources</a>
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -37,11 +37,11 @@ $name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
   <div class="container">
     <div class="hero-card">
       <h1>Report Bullying Safely & Privately</h1>
-      <p>Welcome, <strong><?php echo htmlspecialchars($name); ?></strong>. Submit anonymous reports and track your case.</p>
+      <p>Welcome, <strong><?php echo $name; ?></strong>. Submit anonymous reports and track your case.</p>
 
       <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">
-        <a class="btn primary" href="#">Report Now</a>
-        <a class="btn outline" href="#">Urgent Help</a>
+        <a class="btn primary" href="student_report.php">Report Now</a>
+        <a class="btn outline" href="student_help.php">Urgent Help</a>
       </div>
 
       <div class="pills">
@@ -81,7 +81,7 @@ $name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
         <h3>Report Bullying</h3>
         <p>Start a new case report (anonymous option can be enabled).</p>
         <div style="margin-top:12px;">
-          <a class="btn primary" style="width:100%;" href="#">Start Report</a>
+          <a class="btn primary" style="width:100%;" href="student_report.php">Start Report</a>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ $name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
         <h3>Track Your Report</h3>
         <p>Track case progress using your tracking ID.</p>
         <div style="margin-top:12px;">
-          <a class="btn outline" style="width:100%;" href="#">Track Case</a>
+          <a class="btn outline" style="width:100%;" href="student_track.php">Track Case</a>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ $name = $_SESSION["user"]["name"] ?? ($_SESSION["student_name"] ?? "Student");
         <h3>Get Support</h3>
         <p>See resources for safety and counselling support.</p>
         <div style="margin-top:12px;">
-          <a class="btn outline" style="width:100%;" href="#">View Resources</a>
+          <a class="btn outline" style="width:100%;" href="student_resources.php">View Resources</a>
         </div>
       </div>
     </div>

@@ -5,106 +5,80 @@ require "db.php";
 
 $message = "";
 $message_type = "";
-
 $email_value = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
     $email = trim($_POST["email"] ?? "");
     $password = $_POST["password"] ?? "";
-
-    $email_value = $email; // Keep email after submit
+    $email_value = $email;
 
     if ($email === "" || $password === "") {
-    }
-  }
-$identifier_value = "";
-
-// Student email rule: 7 digits + @gmail.com
-function is_student_email(string $value): bool {
-    return preg_match('/^[0-9]{7}@gmail\.com$/', $value) === 1;
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    $identifier = trim($_POST["identifier"] ?? "");
-    $password   = $_POST["password"] ?? "";
-
-    $identifier_value = $identifier;
-
-    if ($identifier === "" || $password === "") {
 
         $message = "All fields are required.";
         $message_type = "error";
     } else {
-        try {
-            // Student login
-            if (is_student_email($identifier)) {
 
-                $stmt = $conn->prepare("SELECT id, first_name, last_name, email, password FROM student WHERE email = ?");
-                $stmt->bind_param("s", $identifier);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $user = $result->fetch_assoc();
-                $stmt->close();
+        // ================= ADMIN LOGIN =================
+        $stmt = $conn->prepare("SELECT admin_id, full_name, email, password FROM admins WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $admin = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
 
-                if ($user && password_verify($password, $user["password"])) {
-                    session_regenerate_id(true);
+        if ($admin && password_verify($password, $admin["password"])) {
+            $_SESSION["role"] = "admin";
+            $_SESSION["user"] = [
+                "id" => (int)$admin["admin_id"],
+                "name" => $admin["full_name"],
+                "email" => $admin["email"]
+            ];
+            header("Location: admin_dashboard.php");
+            exit;
 
-                    // New unified session
-                    $_SESSION["user"] = [
-                        "role" => "student",
-                        "id"   => $user["id"],
-                        "name" => $user["first_name"] . " " . $user["last_name"],
-                        "identifier" => $user["email"],
-                    ];
-
-                    // legacy (optional)
-                    $_SESSION["student_id"] = $user["id"];
-                    $_SESSION["student_name"] = $user["first_name"];
-
-                    header("Location: student_home.php");
-                    exit;
-                } else {
-                    $message = "Invalid student email or password.";
-                    $message_type = "error";
-                }
-            } 
-            // Teacher login
-            else {
-                $stmt = $conn->prepare("SELECT id, teacher_id, full_name, password FROM teachers WHERE teacher_id = ?");
-                $stmt->bind_param("s", $identifier);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $teacher = $result->fetch_assoc();
-                $stmt->close();
-
-                if ($teacher && password_verify($password, $teacher["password"])) {
-                    session_regenerate_id(true);
-
-                    $_SESSION["user"] = [
-                        "role" => "teacher",
-                        "id"   => $teacher["id"],
-                        "name" => $teacher["full_name"],
-                        "identifier" => $teacher["teacher_id"],
-                    ];
-
-                    header("Location: teacher_home.php");
-                    exit;
-                } else {
-                    $message = "Invalid teacher ID or password.";
-                    $message_type = "error";
-                }
-            }
-
-        } catch (Exception $e) {
-            $message = "Login error: " . $e->getMessage();
-            $message_type = "error";
         }
 
+        // ================= TEACHER LOGIN =================
+        $stmt = $conn->prepare("SELECT teacher_id, email, password FROM teachers WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $teacher = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($teacher && password_verify($password, $teacher["password"])) {
+            $_SESSION["role"] = "teacher";
+            $_SESSION["user"] = [
+                "id" => (int)$teacher["teacher_id"],
+                "name" => $teacher["email"], // no name column in teachers table
+                "email" => $teacher["email"]
+            ];
+            header("Location: teacher_dashboard.php");
+            exit;
+        }
+
+        // ================= STUDENT LOGIN =================
+        $stmt = $conn->prepare("SELECT student_id, first_name, last_name, email, password FROM student WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $student = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($student && password_verify($password, $student["password"])) {
+            $_SESSION["role"] = "student";
+            $_SESSION["user"] = [
+                "id" => (int)$student["student_id"],
+                "name" => trim($student["first_name"] . " " . $student["last_name"]),
+                "email" => $student["email"]
+            ];
+            header("Location: student_dashboard.php");
+            exit;
+        }
+
+        $message = "Invalid email or password!";
+        $message_type = "error";
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,45 +96,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body>
 
-  <div class="page">
-    <header class="page-header">
-      <h1 class="system-title">School Bullying Management System</h1>
-      <h2 class="page-title">Login</h2>
-    </header>
+ 
+<div class="page">
+<header class="page-header">
+  <h1 class="system-title">School Bullying Management System</h1>
+  <h2 class="page-title">Login</h2>
+</header>
 
-    <div class="container">
-      <div class="card">
+<div class="container">
+  <div class="card">
 
-        <?php if ($message): ?>
-          <div class="alert <?php echo $message_type; ?>">
-            <?php echo htmlspecialchars($message); ?>
-          </div>
-        <?php endif; ?>
-
-        <form method="POST" action="">
-          <label>Student Email / Teacher ID</label>
-          <input
-            type="text"
-            name="identifier"
-            value="<?php echo htmlspecialchars($identifier_value); ?>"
-            placeholder="Student: 2023001@gmail.com | Teacher: TCH-001"
-            required
-          />
-
-          <label>Password</label>
-          <input type="password" name="password" placeholder="Enter password" required />
-
-          <button class="btn" type="submit">Login</button>
-        </form>
-
-        <div class="divider"><span>OR</span></div>
-
-        <!-- ONLY ONE register button -->
-        <a class="btn-outline" href="register.php">Create a new student account</a>
-
+    <?php if ($message): ?>
+      <div class="alert <?php echo htmlspecialchars($message_type); ?>">
+        <?php echo htmlspecialchars($message); ?>
       </div>
-    </div>
+    <?php endif; ?>
+
+    <form method="POST">
+      <label>Email</label>
+      <input type="email" name="email" value="<?php echo htmlspecialchars($email_value); ?>" required>
+
+      <label>Password</label>
+      <input type="password" name="password" required>
+
+      <button class="btn" type="submit">Login</button>
+    </form>
+
+    <div class="divider"><span>OR</span></div>
+    <a class="btn-outline" href="register.php">Create a new student account</a>
+
   </div>
+</div>
+</div>
+
 
 </body>
 </html>

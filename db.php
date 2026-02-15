@@ -12,6 +12,6 @@ if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
 }
 
-// Use utf8mb4 (recommended)
+// Optional: set charset (recommended)
 $conn->set_charset("utf8mb4");
 ?>

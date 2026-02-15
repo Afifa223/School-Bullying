@@ -2,7 +2,7 @@
 require_once "auth.php";
 require_role("teacher");
 
-$name = $_SESSION["user"]["name"] ?? "Teacher";
+$name = current_user_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,10 +24,10 @@ $name = $_SESSION["user"]["name"] ?? "Teacher";
       <span>SBMS Teacher Panel</span>
     </div>
     <div class="links">
-      <a href="#">Submitted</a>
-      <a href="#">Urgent</a>
-      <a href="#">Reminders</a>
-      <a href="#">Filters</a>
+      <a href="teacher_submitted.php">Submitted</a>
+      <a href="teacher_urgent.php">Urgent</a>
+      <a href="teacher_reminders.php">Reminders</a>
+      <a href="teacher_filters.php">Filters</a>
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -37,24 +37,26 @@ $name = $_SESSION["user"]["name"] ?? "Teacher";
   <div class="container">
     <div class="hero-card">
       <h1>Teacher / Administrative Functionalities</h1>
-      <p>Welcome, <strong><?php echo htmlspecialchars($name); ?></strong>. Review cases, view evidence, update status, and filter by severity/type/location.</p>
+      <p>Welcome, <strong><?php echo $name; ?></strong>. Review cases, view evidence, update status, and filter by severity/type/location.</p>
     </div>
 
     <div class="grid" style="grid-template-columns: repeat(3, 1fr); margin-top:16px;">
       <div class="card">
         <h3>Submitted Reports</h3>
         <p>All reports submitted by students.</p>
-        <div style="font-size:28px; font-weight:900; margin-top:10px;">0</div>
+        <a class="btn outline" href="teacher_submitted.php" style="margin-top:10px; display:inline-block;">Open</a>
       </div>
+
       <div class="card">
         <h3>Urgent Cases</h3>
         <p>High severity cases needing quick action.</p>
-        <div style="font-size:28px; font-weight:900; margin-top:10px; color:#b91c1c;">0</div>
+        <a class="btn outline" href="teacher_urgent.php" style="margin-top:10px; display:inline-block;">Open</a>
       </div>
+
       <div class="card">
         <h3>Follow-up Reminders</h3>
         <p>Cases waiting for follow-up updates.</p>
-        <div style="font-size:28px; font-weight:900; margin-top:10px; color:var(--primary);">0</div>
+        <a class="btn outline" href="teacher_reminders.php" style="margin-top:10px; display:inline-block;">Open</a>
       </div>
     </div>
 
@@ -64,33 +66,10 @@ $name = $_SESSION["user"]["name"] ?? "Teacher";
         View incident details, severity and location, evidence (images for cyberbullying), and update case status.
       </p>
 
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Case ID</th>
-            <th>Incident Type</th>
-            <th>Location</th>
-            <th>Severity</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>#—</td><td>—</td><td>—</td><td>High</td><td>Under Review</td>
-          </tr>
-          <tr>
-            <td>#—</td><td>—</td><td>—</td><td>Medium</td><td>Action Taken</td>
-          </tr>
-          <tr>
-            <td>#—</td><td>—</td><td>—</td><td>Low</td><td>Resolved</td>
-          </tr>
-        </tbody>
-      </table>
-
       <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
-        <a class="btn primary" href="#">View Detailed Case</a>
-        <a class="btn outline" href="#">Update Status</a>
-        <a class="btn outline" href="#">Filter Cases</a>
+        <a class="btn primary" href="teacher_view_case.php">View Detailed Case</a>
+        <a class="btn outline" href="teacher_update_status.php">Update Status</a>
+        <a class="btn outline" href="teacher_filter_cases.php">Filter Cases</a>
       </div>
     </div>
 
