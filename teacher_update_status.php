@@ -16,11 +16,8 @@ function dt_local_to_mysql(string $dt): string {
   $dt = trim($dt);
   if ($dt === "") return "";
 
-  // Replace T with space
   $dt = str_replace("T", " ", $dt);
 
-  // If seconds are missing, add :00
-  // e.g. 2026-03-01 17:21 -> 2026-03-01 17:21:00
   if (preg_match('/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$/', $dt)) {
     $dt .= ":00";
   }
@@ -35,13 +32,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   if ($action === "update_status") {
     $case_id = trim($_POST["case_id"] ?? "");
     $new_status = trim($_POST["status"] ?? "");
+    $teacher_note = trim($_POST["teacher_note"] ?? ""); // ✅ NEW
 
     if ($case_id === "" || !in_array($new_status, $allowed_status, true)) {
       $message = "Invalid Case ID or Status.";
       $message_type = "error";
     } else {
-      $stmt = $conn->prepare("UPDATE bullying_reports SET status = ? WHERE case_id = ?");
-      $stmt->bind_param("ss", $new_status, $case_id);
+      // ✅ resolved_mark should be "resolved" only if status is resolved, otherwise NULL
+      $resolved_status = ($new_status === "resolved") ? "resolved" : null;
+
+      $stmt = $conn->prepare("
+        UPDATE bullying_reports
+        SET status = ?, teacher_note = ?, resolved_status = ?
+        WHERE case_id = ?
+      ");
+      $stmt->bind_param("ssss", $new_status, $teacher_note, $resolved_status, $case_id);
       $stmt->execute();
       $stmt->close();
 
@@ -65,7 +70,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $message = "Please pick a follow-up date/time and press OK before saving.";
       $message_type = "error";
     } else {
-      // Get report_id from case_id
       $stmt = $conn->prepare("SELECT report_id FROM bullying_reports WHERE case_id = ? LIMIT 1");
       $stmt->bind_param("s", $case_id);
       $stmt->execute();
@@ -79,7 +83,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $report_id = (int)$row["report_id"];
         $tid = teacher_id();
 
-        // Insert reminder
         $stmt = $conn->prepare("
           INSERT INTO followups (report_id, teacher_id, followup_datetime, note)
           VALUES (?, ?, ?, ?)
@@ -127,6 +130,13 @@ teacher_header("", "Update Status | SBMS");
                 <option value="<?php echo e($st); ?>"><?php echo e($st); ?></option>
               <?php endforeach; ?>
             </select>
+          </div>
+
+          <!-- ✅ NEW: Teacher note for status update -->
+          <div class="field">
+            <label>Teacher Note (optional)</label>
+            <textarea name="teacher_note" rows="3"
+              placeholder="Write notes for the student (shown in My Reports)..."></textarea>
           </div>
 
           <div class="card-actions">

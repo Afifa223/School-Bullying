@@ -13,7 +13,11 @@ $student_id = current_user_id();
 */
 
 // Load student information from DB
-$stmt = $conn->prepare("SELECT first_name, last_name, email FROM student WHERE student_id = ?");   // ✅ FIX: student_id -> id
+$stmt = $conn->prepare("
+  SELECT first_name, last_name, email, admission_year, roll_number
+  FROM student
+  WHERE student_id = ?
+");  
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
@@ -66,8 +70,8 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
       <?php if ($student): ?>
         <div class="student-info">
           <div><strong>Email:</strong> <?php echo htmlspecialchars($student["email"]); ?></div>
-          <div><strong>Admission Year:</strong> <?php echo (int)$student["admission_year"]; ?></div>
-          <div><strong>Roll Number:</strong> <?php echo (int)$student["roll_number"]; ?></div>
+          <div><strong>Admission Year:</strong> <?php echo htmlspecialchars($student["admission_year"] ?? "-"); ?></div>
+          <div><strong>Roll Number:</strong> <?php echo htmlspecialchars($student["roll_number"] ?? "-"); ?></div>
         </div>
       <?php endif; ?>
 

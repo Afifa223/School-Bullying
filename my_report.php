@@ -7,18 +7,14 @@ require "db.php";
 
 $student_id = current_user_id();
 
-/**
- * Clean + short preview from description
- */
 function preview_text(string $text, int $max = 90): string {
   $text = trim(preg_replace('/\s+/', ' ', $text));
   if (mb_strlen($text) <= $max) return $text;
   return mb_substr($text, 0, $max) . "…";
 }
 
-// Fetch reports (Case ID + submitted time + type + description)
 $stmt = $conn->prepare("
-  SELECT case_id, submitted_at, is_anonymous, description
+  SELECT case_id, submitted_at, is_anonymous, description, teacher_note, resolved_status
   FROM bullying_reports
   WHERE owner_student_id = ?
   ORDER BY submitted_at DESC, report_id DESC
@@ -34,14 +30,10 @@ $stmt->close();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>My Reports | SBMS</title>
-  <link rel="stylesheet" href="css/my_report.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/my_report.css?v=10">
 </head>
 <body>
 
-<!-- NAV -->
 <div class="nav">
   <div class="container nav-inner">
     <div class="brand">
@@ -52,7 +44,7 @@ $stmt->close();
       <a href="student_dashboard.php">Home</a>
       <a href="student_report.php">Start Report</a>
       <a href="student_track.php">Track</a>
-      <a href="my_reports.php" class="active">My Reports</a>
+      <a href="my_report.php" class="active">My Reports</a>
       <a href="help_resources.php">Help & Resources</a>
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
@@ -63,13 +55,11 @@ $stmt->close();
   <div class="container">
 
     <div class="page-head">
-      <div>
-        <h1>My Reports</h1>
-        <p class="muted">Here are your submitted reports with submission time and a short preview.</p>
-      </div>
+      <h1>My Reports</h1>
+      <p class="muted">Here are your submitted reports with teacher notes and resolution info.</p>
     </div>
 
-    <div class="card list-card">
+    <div class="card">
 
       <?php if (!$reports): ?>
         <div class="empty">
@@ -80,38 +70,63 @@ $stmt->close();
 
         <div class="table">
 
-          <!-- TABLE HEADER -->
+          <!-- HEADER -->
           <div class="trow thead">
             <div>Case ID</div>
-            <div>Submitted</div>
-            <div>Type</div>
             <div>Description (Preview)</div>
+            <div>Submitted</div>
+            <div>Teacher Note</div>
+            <div>Resolved Status</div>
+            <div>Type</div>
           </div>
 
-          <!-- TABLE BODY -->
+          <!-- BODY -->
           <?php foreach ($reports as $r): ?>
+
             <?php
-              $isAnon = (int)($r["is_anonymous"] ?? 0) === 1;
+              $isAnon = (int)$r["is_anonymous"] === 1;
               $typeLabel = $isAnon ? "Anonymous" : "Standard";
               $typeClass = $isAnon ? "type-anon" : "type-norm";
+              $teacherNote = trim((string)$r["teacher_note"]);
+              $resolvedStatus = trim((string)$r["resolved_status"]);
             ?>
-            <div class="trow tbody">
-              <div class="caseid"><?php echo htmlspecialchars($r["case_id"]); ?></div>
 
-              <div class="date">
-                <?php echo htmlspecialchars($r["submitted_at"] ?? "—"); ?>
+            <div class="trow tbody">
+
+              <!-- 1 Case ID -->
+              <div class="caseid">
+                <?php echo htmlspecialchars($r["case_id"]); ?>
               </div>
 
+              <!-- 2 Description -->
+              <div>
+                <?php echo htmlspecialchars(preview_text($r["description"],110)); ?>
+              </div>
+
+              <!-- 3 Submitted -->
+              <div>
+                <?php echo htmlspecialchars($r["submitted_at"]); ?>
+              </div>
+
+              <!-- 4 Teacher Note -->
+              <div>
+                <?php echo htmlspecialchars($teacherNote !== "" ? $teacherNote : "—"); ?>
+              </div>
+
+              <!-- 5 Resolved Status -->
+              <div class="resolved">
+                <?php echo htmlspecialchars($resolvedStatus !== "" ? $resolvedStatus : ""); ?>
+              </div>
+
+              <!-- 6 Type -->
               <div>
                 <span class="type <?php echo $typeClass; ?>">
                   <?php echo htmlspecialchars($typeLabel); ?>
                 </span>
               </div>
 
-              <div class="desc-preview">
-                <?php echo htmlspecialchars(preview_text((string)($r["description"] ?? ""), 110)); ?>
-              </div>
             </div>
+
           <?php endforeach; ?>
 
         </div>

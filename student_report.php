@@ -7,10 +7,11 @@ require "db.php";
 
 $message = "";
 $message_type = "";
-$case_id_created = "";
 
+/**
+ * Example: SBMS-20260227-AB12CD
+ */
 function generate_case_id(): string {
-    // Example: SBMS-20260227-AB12CD
     $datePart = date("Ymd");
     $randPart = strtoupper(bin2hex(random_bytes(3))); // 6 hex chars
     return "SBMS-$datePart-$randPart";
@@ -34,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // Basic validation
     $allowed_incidents = ["physical","verbal","cyberbullying","social","other"];
-    $allowed_severity = ["low","medium","high"];
+    $allowed_severity  = ["low","medium","high"];
 
     if (!in_array($incident_type, $allowed_incidents, true)) {
         $message = "Invalid incident type.";
@@ -47,60 +48,58 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $message_type = "error";
     } else {
 
-        // anonymous: store NULL student_id
-        $store_student_id = $is_anonymous ? null : $student_id;
-
-        // generate unique case_id (retry if collision)
+        // Generate unique case_id (retry if collision)
         $case_id = generate_case_id();
         $tries = 0;
+
         while ($tries < 5) {
             $chk = $conn->prepare("SELECT report_id FROM bullying_reports WHERE case_id = ?");
             $chk->bind_param("s", $case_id);
             $chk->execute();
             $exists = $chk->get_result()->fetch_assoc();
             $chk->close();
+
             if (!$exists) break;
+
             $case_id = generate_case_id();
             $tries++;
         }
+
         if ($tries >= 5) {
             $message = "Could not generate a unique Case ID. Try again.";
             $message_type = "error";
         } else {
 
+            // Insert report (Case ID is stored in DB, but not shown on page)
+            $sql = "INSERT INTO bullying_reports
+            (case_id, owner_student_id, student_id, is_anonymous,
+             incident_type, severity, occurrence_datetime, location, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            // Insert report
-          $status = "submitted";   // ✅ VERY IMPORTANT LINE
+            $stmt = $conn->prepare($sql);
 
-$sql = "INSERT INTO bullying_reports
-(case_id, owner_student_id, student_id, is_anonymous,
- incident_type, severity, occurrence_datetime, location, description)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $owner_student_id  = $student_id;                 // always saved for ownership
+            $public_student_id = $is_anonymous ? null : $student_id; // NULL if anonymous
 
-$stmt = $conn->prepare($sql);
+            // NOTE: if your student_id columns allow NULL, this is OK
+            $stmt->bind_param(
+                "siiisssss",
+                $case_id,
+                $owner_student_id,
+                $public_student_id,
+                $is_anonymous,
+                $incident_type,
+                $severity,
+                $occurrence_datetime,
+                $location,
+                $description
+            );
 
-$owner_student_id = $student_id;
-$public_student_id = $is_anonymous ? null : $student_id;
+            $stmt->execute();
+            $report_id = $stmt->insert_id;
+            $stmt->close();
 
-$stmt->bind_param(
-    "siiisssss",
-    $case_id,
-    $owner_student_id,
-    $public_student_id,
-    $is_anonymous,
-    $incident_type,
-    $severity,
-    $occurrence_datetime,
-    $location,
-    $description
-);
-
-$stmt->execute();
-$report_id = $stmt->insert_id;
-$stmt->close();
-
-            // Handle evidence upload (optional)
-            // Accept multiple files: <input name="evidence[]" multiple>
+            // Evidence upload (optional)
             if (!empty($_FILES["evidence"]) && !empty($_FILES["evidence"]["name"][0])) {
 
                 $upload_dir = __DIR__ . "/uploads/";
@@ -117,7 +116,7 @@ $stmt->close();
                         continue;
                     }
 
-                    $tmp = $_FILES["evidence"]["tmp_name"][$i];
+                    $tmp  = $_FILES["evidence"]["tmp_name"][$i];
                     $orig = $_FILES["evidence"]["name"][$i];
                     $size = (int)$_FILES["evidence"]["size"][$i];
 
@@ -153,9 +152,9 @@ $stmt->close();
                 }
             }
 
+            // ✅ Show only this message on top (form remains visible)
             $message = "Report submitted successfully!";
             $message_type = "success";
-            $case_id_created = $case_id;
         }
     }
 }
@@ -199,17 +198,10 @@ $stmt->close();
         Fill in the details carefully. You can submit anonymously.
       </p>
 
+      <!-- ✅ Message shown on top of the form -->
       <?php if ($message): ?>
         <div class="alert <?php echo htmlspecialchars($message_type); ?>" style="margin-top:12px;">
           <?php echo htmlspecialchars($message); ?>
-          <?php if ($message_type === "success" && $case_id_created): ?>
-            <div style="margin-top:10px; font-weight:800;">
-              Your Case ID: <span style="padding:6px 10px; border-radius:10px; border:1px solid rgba(0,0,0,0.12);">
-                <?php echo htmlspecialchars($case_id_created); ?>
-              </span>
-            </div>
-            
-          <?php endif; ?>
         </div>
       <?php endif; ?>
 
@@ -243,7 +235,7 @@ $stmt->close();
         <input type="datetime-local" name="occurrence_datetime" required style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
 
         <label style="display:block; margin-top:12px; font-weight:700;">Location</label>
-        <input type="text" name="location" required placeholder="Playground, washroom, corridor..." 
+        <input type="text" name="location" required placeholder="Playground, washroom, corridor..."
                style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
 
         <label style="display:block; margin-top:12px; font-weight:700;">Detailed Description</label>

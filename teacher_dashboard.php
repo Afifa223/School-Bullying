@@ -50,7 +50,6 @@ teacher_header("dashboard", "Teacher Dashboard | SBMS");
       </div>
     </div>
 
-    <div class="footer">Teacher tools · Severity / Type / Location / Status Filters · Privacy & Terms</div>
   </div>
 </div>
 <?php teacher_footer(); ?>

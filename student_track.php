@@ -9,19 +9,19 @@ $student_id = current_user_id();
 
 /**
  * Status pipeline (teacher will update later)
- * Keep these keys stable so teacher dashboard can update them.
  */
 function status_steps(): array {
   return [
-    "submitted"   => "Submitted",
-    "seen"        => "Seen by Teacher",
-    "under_review"=> "Under Review",
-    "resolved"    => "Resolved",
+    "submitted"    => "Submitted",
+    "seen"         => "Seen by Teacher",
+    "under-review" => "Under Review",
+    "action-taken" => "Action Taken",
+    "resolved"     => "Resolved"
   ];
 }
 
 /**
- * Make a human friendly title from report fields
+ * Title from report fields
  */
 function generate_title(array $r): string {
   $incident = ucfirst(str_replace("_", " ", $r["incident_type"] ?? "incident"));
@@ -33,7 +33,7 @@ function generate_title(array $r): string {
 }
 
 /**
- * "X days ago" from submitted_at
+ * "X days ago" label
  */
 function days_ago_label(?string $submitted_at): string {
   if (!$submitted_at) return "—";
@@ -51,7 +51,7 @@ function days_ago_label(?string $submitted_at): string {
 }
 
 /**
- * Progress percent based on step index
+ * Progress percent based on status step
  */
 function progress_percent(string $status): int {
   $keys = array_keys(status_steps());
@@ -62,7 +62,7 @@ function progress_percent(string $status): int {
 }
 
 /**
- * AJAX: return report details JSON for modal
+ * AJAX: return report details for modal
  */
 if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
   header("Content-Type: application/json; charset=utf-8");
@@ -73,7 +73,7 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
     exit;
   }
 
-  // Only allow the owner_student_id (the logged-in student) to view the report
+  // Only owner_student_id can view
   $stmt = $conn->prepare("SELECT report_id, case_id, incident_type, severity, occurrence_datetime, location, description, status, submitted_at
                           FROM bullying_reports
                           WHERE case_id = ? AND owner_student_id = ?
@@ -128,7 +128,7 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
 }
 
 /**
- * Normal page: load ALL reports for this student (owner_student_id)
+ * Normal page: load all reports for student
  */
 $stmt = $conn->prepare("SELECT report_id, case_id, incident_type, severity, occurrence_datetime, location, description, status, submitted_at
                         FROM bullying_reports
@@ -178,21 +178,18 @@ $stmt->close();
         <h1>Your Submitted Reports</h1>
         <p class="muted">All your reports are listed here. Click <b>Track</b> to view details and progress.</p>
       </div>
-      
     </div>
 
     <?php if (!$reports): ?>
       <div class="empty">
         <h3>No reports yet</h3>
-        <p class="muted">When you submit a bullying report, it will appear here with a Case ID.</p>
+        <p class="muted">When you submit a bullying report, it will appear here.</p>
         <a class="btn outline" href="student_report.php">Start a Report</a>
       </div>
     <?php else: ?>
       <div class="grid">
-        <?php foreach ($reports as $r): 
+        <?php foreach ($reports as $r):
           $title = generate_title($r);
-          $status = $r["status"] ?: "submitted";
-          $status_label = status_steps()[$status] ?? "Submitted";
           $days = days_ago_label($r["submitted_at"]);
         ?>
           <div class="report-card">
@@ -205,9 +202,7 @@ $stmt->close();
                 </div>
               </div>
 
-              <div class="status-badge status-<?php echo htmlspecialchars($status); ?>">
-                <?php echo htmlspecialchars($status_label); ?>
-              </div>
+              <!-- ✅ REMOVED: status badge from card -->
             </div>
 
             <div class="card-mid">
@@ -351,7 +346,6 @@ $stmt->close();
       modalTitle.textContent = d.title;
       modalSub.textContent = `Case ID: ${d.case_id} • ${d.days_ago} • Status: ${d.status_label}`;
 
-      // Details
       detailBox.innerHTML = `
         <div class="kv"><div class="k">Incident Type</div><div class="v">${escapeHtml(d.incident_type)}</div></div>
         <div class="kv"><div class="k">Severity</div><div class="v">${escapeHtml(d.severity)}</div></div>
@@ -361,7 +355,6 @@ $stmt->close();
         <div class="kv"><div class="k">Description</div><div class="v pre">${escapeHtml(d.description || '—')}</div></div>
       `;
 
-      // Evidence
       if(!d.evidence || d.evidence.length === 0){
         evidenceBox.innerHTML = `<div class="muted">No evidence uploaded.</div>`;
       } else {
@@ -374,7 +367,6 @@ $stmt->close();
         `).join('');
       }
 
-      // Progress + timeline
       progressFill.style.width = `${d.progress_percent}%`;
       progressPct.textContent = `${d.progress_percent}%`;
 
@@ -405,10 +397,10 @@ $stmt->close();
   }
 
   function timelineHint(statusKey, d){
-    // simple hints (you can refine later)
     if(statusKey === 'submitted') return `Submitted • ${d.submitted_at || '—'}`;
     if(statusKey === 'seen') return `Waiting for teacher to view`;
-    if(statusKey === 'under_review') return `Investigation in progress`;
+    if(statusKey === 'under-review') return `Investigation in progress`;
+     if(statusKey === 'action-taken') return `Action taken against culprit`;
     if(statusKey === 'resolved') return `Case closed`;
     return '';
   }
