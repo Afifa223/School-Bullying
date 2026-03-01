@@ -240,16 +240,23 @@
   color: rgba(255,255,255,0.92);
 }
 
+/* ✅ UPDATED: all inputs same white style */
 .field input{
   width:100%;
   padding: 12px 12px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.20);
-  color: rgba(255,255,255,0.92);
+  background: #eef4ff;              /* white-ish */
+  color: #0b1220;                   /* dark text */
   outline: none;
 }
 
+/* placeholder color */
+.field input::placeholder{
+  color: rgba(11, 18, 32, 0.55);
+}
+
+/* keep focus style */
 .field input:focus{
   border-color: rgba(56,189,248,0.65);
   box-shadow: 0 0 0 4px rgba(56,189,248,0.14);

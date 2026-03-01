@@ -7,9 +7,15 @@ require "db.php";
 
 $student_id = current_user_id();
 
+/*
+ // DEBUG (optional): session id ঠিক আসছে কিনা দেখতে চাইলে uncomment করো
+ // var_dump($student_id); exit;
+*/
+
 // Load student information from DB
-$stmt = $conn->prepare("SELECT first_name, last_name, admission_year, roll_number, email 
-                        FROM student WHERE student_id = ?");
+$stmt = $conn->prepare("SELECT first_name, last_name, admission_year, roll_number, email
+                        FROM student
+                        WHERE id = ?");   // ✅ FIX: student_id -> id
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
@@ -44,7 +50,7 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
       <a href="student_track.php">Track</a>
       <a href="my_report.php">My Reports</a>
       <a href="help_resources.php">Help & Resources</a>
-      
+
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -66,8 +72,6 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
           <div><strong>Roll Number:</strong> <?php echo (int)$student["roll_number"]; ?></div>
         </div>
       <?php endif; ?>
-
-    
 
       <!-- Feature Slider (Advertisement Style) -->
       <div class="feature-slider" aria-label="SBMS features slider">
@@ -131,7 +135,6 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
           <a class="btn outline full" href="my_report.php">View Reports</a>
         </div>
       </div>
-
 
       <div class="card">
         <h3>Help & Resources</h3>
