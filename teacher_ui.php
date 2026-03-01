@@ -64,9 +64,7 @@ function teacher_header(string $active, string $title = "SBMS Teacher Panel"): v
 
 function teacher_footer(): void {
   ?>
-    <div class="footer">
-      Teacher tools · Severity / Type / Location / Status Filters · Privacy & Terms
-    </div>
+  
   </body>
   </html>
   <?php
