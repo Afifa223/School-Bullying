@@ -13,9 +13,7 @@ $student_id = current_user_id();
 */
 
 // Load student information from DB
-$stmt = $conn->prepare("SELECT first_name, last_name, admission_year, roll_number, email
-                        FROM student
-                        WHERE id = ?");   // ✅ FIX: student_id -> id
+$stmt = $conn->prepare("SELECT first_name, last_name, email FROM student WHERE student_id = ?");   // ✅ FIX: student_id -> id
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();

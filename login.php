@@ -56,8 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         // ================= STUDENT LOGIN =================
-        $stmt = $conn->prepare("SELECT id, first_name, last_name, email, password FROM student WHERE email = ?");
-        $stmt->bind_param("s", $email);
+        $stmt = $conn->prepare("SELECT student_id, first_name, last_name, email, password FROM student WHERE email = ?");        $stmt->bind_param("s", $email);
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc();
         $stmt->close();
