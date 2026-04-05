@@ -12,28 +12,56 @@ $where = [];
 $params = [];
 $types = "";
 
-if ($severity !== "") { $where[] = "br.severity = ?"; $params[] = $severity; $types .= "s"; }
-if ($type !== "")     { $where[] = "br.incident_type = ?"; $params[] = $type; $types .= "s"; }
-if ($status !== "")   { $where[] = "br.status = ?"; $params[] = $status; $types .= "s"; }
-if ($location !== "") { $where[] = "br.location LIKE ?"; $params[] = "%".$location."%"; $types .= "s"; }
+if ($severity !== "") {
+  $where[] = "br.severity = ?";
+  $params[] = $severity;
+  $types .= "s";
+}
+
+if ($type !== "") {
+  $where[] = "br.incident_type = ?";
+  $params[] = $type;
+  $types .= "s";
+}
+
+if ($status !== "") {
+  $where[] = "br.status = ?";
+  $params[] = $status;
+  $types .= "s";
+}
+
+if ($location !== "") {
+  $where[] = "br.location LIKE ?";
+  $params[] = "%" . $location . "%";
+  $types .= "s";
+}
 
 $sql = "
   SELECT br.case_id, br.incident_type, br.severity, br.location, br.status, br.submitted_at
   FROM bullying_reports br
 ";
+
 if (count($where) > 0) {
   $sql .= " WHERE " . implode(" AND ", $where);
 }
+
 $sql .= " ORDER BY br.submitted_at DESC";
 
 $stmt = $conn->prepare($sql);
+
 if ($types !== "") {
   $stmt->bind_param($types, ...$params);
 }
+
 $stmt->execute();
 $res = $stmt->get_result();
 $stmt->close();
+
+function format_label($value) {
+  return ucwords(str_replace("-", " ", $value));
+}
 ?>
+
 <div class="hero">
   <div class="container">
     <div class="hero-card">
@@ -45,8 +73,10 @@ $stmt->close();
           <label>Severity</label>
           <select name="severity">
             <option value="">All</option>
-            <?php foreach (["Low","Medium","High"] as $v): ?>
-              <option value="<?php echo e($v); ?>" <?php echo $severity===$v ? "selected" : ""; ?>><?php echo e($v); ?></option>
+            <?php foreach (["low", "medium", "high"] as $v): ?>
+              <option value="<?php echo e($v); ?>" <?php echo $severity === $v ? "selected" : ""; ?>>
+                <?php echo e(ucfirst($v)); ?>
+              </option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -55,8 +85,10 @@ $stmt->close();
           <label>Incident Type</label>
           <select name="type">
             <option value="">All</option>
-            <?php foreach (["Physical","Verbal","Cyberbullying","Social","Other"] as $v): ?>
-              <option value="<?php echo e($v); ?>" <?php echo $type===$v ? "selected" : ""; ?>><?php echo e($v); ?></option>
+            <?php foreach (["physical", "verbal", "cyberbullying", "social", "other"] as $v): ?>
+              <option value="<?php echo e($v); ?>" <?php echo $type === $v ? "selected" : ""; ?>>
+                <?php echo e(ucfirst($v)); ?>
+              </option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -65,15 +97,22 @@ $stmt->close();
           <label>Status</label>
           <select name="status">
             <option value="">All</option>
-            <?php foreach (["submitted","under-review","action-taken","resolved"] as $v): ?>
-              <option value="<?php echo e($v); ?>" <?php echo $status===$v ? "selected" : ""; ?>><?php echo e($v); ?></option>
+            <?php foreach (["submitted", "under-review", "action-taken", "resolved"] as $v): ?>
+              <option value="<?php echo e($v); ?>" <?php echo $status === $v ? "selected" : ""; ?>>
+                <?php echo e(format_label($v)); ?>
+              </option>
             <?php endforeach; ?>
           </select>
         </div>
 
         <div class="field">
           <label>Location (contains)</label>
-          <input name="location" value="<?php echo e($location); ?>" placeholder="Example: cafeteria / hallway / class">
+          <input
+            type="text"
+            name="location"
+            value="<?php echo e($location); ?>"
+            placeholder="Example: cafeteria / hallway / class"
+          >
         </div>
 
         <div class="card-actions">
@@ -96,22 +135,29 @@ $stmt->close();
           </tr>
         </thead>
         <tbody>
-        <?php while ($row = $res->fetch_assoc()): ?>
-          <tr>
-            <td><?php echo e($row["case_id"]); ?></td>
-            <td><?php echo e($row["incident_type"]); ?></td>
-            <td><?php echo e($row["severity"]); ?></td>
-            <td><?php echo e($row["location"]); ?></td>
-            <td><?php echo e($row["status"]); ?></td>
-            <td>
-              <a class="btn small outline" href="teacher_case_view.php?case_id=<?php echo urlencode($row["case_id"]); ?>">View</a>
-              <a class="btn small outline" href="teacher_update_status.php?case_id=<?php echo urlencode($row["case_id"]); ?>">Update</a>
-            </td>
-          </tr>
-        <?php endwhile; ?>
+          <?php if ($res && $res->num_rows > 0): ?>
+            <?php while ($row = $res->fetch_assoc()): ?>
+              <tr>
+                <td><?php echo e($row["case_id"]); ?></td>
+                <td><?php echo e(ucfirst($row["incident_type"])); ?></td>
+                <td><?php echo e(ucfirst($row["severity"])); ?></td>
+                <td><?php echo e($row["location"]); ?></td>
+                <td><?php echo e(format_label($row["status"])); ?></td>
+                <td>
+                  <a class="btn small outline" href="teacher_case_view.php?case_id=<?php echo urlencode($row["case_id"]); ?>">View</a>
+                  <a class="btn small outline" href="teacher_update_status.php?case_id=<?php echo urlencode($row["case_id"]); ?>">Update</a>
+                </td>
+              </tr>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="6" style="text-align:center;">No cases found for the selected filters.</td>
+            </tr>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
 <?php teacher_footer(); ?>
