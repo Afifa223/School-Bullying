@@ -4,6 +4,7 @@ require "db.php";
 
 $message = "";
 $message_type = "";
+$redirect = false;
 
 $values = [
   "first_name" => "",
@@ -11,6 +12,7 @@ $values = [
   "email"      => ""
 ];
 
+// Password validation
 function valid_password(string $pw): bool {
   if (strlen($pw) < 8) return false;
   if (!preg_match('/[A-Z]/', $pw)) return false;
@@ -37,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $message_type = "error";
   }
   elseif (!preg_match('/^[0-9]{7}@gmail\.com$/', $email)) {
-    $message = "Email must be 7 digits followed by @gmail.com (example: 2023001@gmail.com).";
+    $message = "Email must be 7 digits followed by @gmail.com.";
     $message_type = "error";
   }
   elseif ($password !== $confirm) {
@@ -45,10 +47,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $message_type = "error";
   }
   elseif (!valid_password($password)) {
-    $message = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+    $message = "Password must be strong (8+ chars, uppercase, lowercase, number, special char).";
     $message_type = "error";
   }
   else {
+
     $digits = substr($email, 0, 7);
     $admission_year = (int) substr($digits, 0, 4);
     $roll_number    = (int) substr($digits, 4, 3);
@@ -57,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $message = "Invalid admission year.";
       $message_type = "error";
     } elseif ($roll_number < 1 || $roll_number > 100) {
-      $message = "Roll number must be between 001 and 100.";
+      $message = "Roll must be 001–100.";
       $message_type = "error";
     } else {
 
@@ -72,20 +75,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
         $stmt->close();
 
-        $message = "Registration successful! You can now log in.";
+        $message = "Registration successful! Redirecting to login...";
         $message_type = "success";
+        $redirect = true;
 
-        $values = [
-          "first_name" => "",
-          "last_name"  => "",
-          "email"      => ""
-        ];
+        $values = ["first_name" => "", "last_name" => "", "email" => ""];
       } catch (mysqli_sql_exception $e) {
         if ((int)$e->getCode() === 1062) {
-          $message = "This email is already registered. Please log in.";
+          $message = "Email already registered.";
           $message_type = "error";
         } else {
-          $message = "Registration error: " . $e->getMessage();
+          $message = "Error: " . $e->getMessage();
           $message_type = "error";
         }
       }
@@ -97,15 +97,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>SBMS | Student Registration</title>
+  <meta charset="UTF-8">
+  <title>Register</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css">
 
-  <link rel="stylesheet" href="css/login.css?v=20" />
+  <?php if ($redirect): ?>
+    <!-- AUTO REDIRECT AFTER 2 SECONDS -->
+    <meta http-equiv="refresh" content="2;url=login.php">
+  <?php endif; ?>
+
 </head>
 <body>
 
@@ -121,60 +122,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="card">
 
       <?php if ($message): ?>
-        <div class="alert <?php echo htmlspecialchars($message_type); ?>">
-          <?php echo htmlspecialchars($message); ?>
+        <div class="alert <?php echo $message_type; ?>">
+          <?php echo $message; ?>
         </div>
       <?php endif; ?>
 
       <form method="POST">
         <label>First Name</label>
-        <input
-          type="text"
-          name="first_name"
-          value="<?php echo htmlspecialchars($values["first_name"]); ?>"
-          placeholder="Enter your first name"
-          required
-        >
+        <input type="text" name="first_name"
+          value="<?php echo htmlspecialchars($values["first_name"]); ?>" required>
 
         <label>Last Name</label>
-        <input
-          type="text"
-          name="last_name"
-          value="<?php echo htmlspecialchars($values["last_name"]); ?>"
-          placeholder="Enter your last name"
-          required
-        >
+        <input type="text" name="last_name"
+          value="<?php echo htmlspecialchars($values["last_name"]); ?>" required>
 
         <label>Email</label>
-        <input
-          type="text"
-          name="email"
-          value="<?php echo htmlspecialchars($values["email"]); ?>"
-          placeholder="2023001@gmail.com"
-          required
-        >
+        <input type="text" name="email"
+          value="<?php echo htmlspecialchars($values["email"]); ?>" required>
 
         <label>Password</label>
-        <input
-          type="password"
-          name="password"
-          placeholder="Create your password"
-          required
-        >
+        <input type="password" name="password" required>
 
         <label>Confirm Password</label>
-        <input
-          type="password"
-          name="confirm_password"
-          placeholder="Confirm your password"
-          required
-        >
+        <input type="password" name="confirm_password" required>
 
         <button class="btn" type="submit">Create Account</button>
       </form>
-
-      <div class="divider"><span>OR</span></div>
-      <a class="btn-outline" href="login.php">Back to Login</a>
 
     </div>
   </div>
