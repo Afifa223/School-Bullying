@@ -1,0 +1,160 @@
+.teachers-card {
+    padding-bottom: 18px;
+}
+
+.top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 18px 0 14px;
+}
+
+.count-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.count-label {
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 700;
+}
+
+.count-value {
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.add-btn {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(90deg, #2d6df6, #3db7ff);
+    box-shadow: 0 10px 24px rgba(25, 90, 255, 0.22);
+    transition: 0.2s ease;
+}
+
+.add-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.96;
+}
+
+.search-row {
+    margin-top: 10px;
+}
+
+.helper-text {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 14px;
+}
+
+.select2-container {
+    width: 100% !important;
+}
+
+.table-wrap {
+    overflow: auto;
+    margin-top: 16px;
+    border-radius: 16px;
+}
+
+.teachers-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.teachers-table th,
+.teachers-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    text-align: left;
+}
+
+.teachers-table th {
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 900;
+}
+
+.teachers-table td {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.teachers-table tbody tr {
+    transition: 0.2s ease;
+}
+
+.teachers-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.table-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: 0.2s ease;
+}
+
+.table-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.danger-btn {
+    background: rgba(231, 76, 60, 0.16);
+    border: 1px solid rgba(231, 76, 60, 0.35);
+    color: #ffb7ad;
+}
+
+.danger-btn:hover {
+    background: rgba(231, 76, 60, 0.24);
+}
+
+.empty-state {
+    margin-top: 18px;
+    padding: 22px;
+    text-align: center;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.76);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .top-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-btn {
+        text-align: center;
+    }
+
+    .teachers-table th,
+    .teachers-table td {
+        padding: 12px 10px;
+        font-size: 14px;
+    }
+}
