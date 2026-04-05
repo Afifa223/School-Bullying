@@ -7,13 +7,11 @@ require "db.php";
 
 $message = "";
 $message_type = "";
+$show_success_dialog = false;
 
-/**
- * Example: SBMS-20260227-AB12CD
- */
 function generate_case_id(): string {
     $datePart = date("Ymd");
-    $randPart = strtoupper(bin2hex(random_bytes(3))); // 6 hex chars
+    $randPart = strtoupper(bin2hex(random_bytes(3)));
     return "SBMS-$datePart-$randPart";
 }
 
@@ -33,7 +31,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $location = clean_text($_POST["location"] ?? "");
     $description = clean_text($_POST["description"] ?? "");
 
-    // Basic validation
     $allowed_incidents = ["physical","verbal","cyberbullying","social","other"];
     $allowed_severity  = ["low","medium","high"];
 
@@ -47,8 +44,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $message = "Please fill all required fields.";
         $message_type = "error";
     } else {
-
-        // Generate unique case_id (retry if collision)
         $case_id = generate_case_id();
         $tries = 0;
 
@@ -59,7 +54,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $exists = $chk->get_result()->fetch_assoc();
             $chk->close();
 
-            if (!$exists) break;
+            if (!$exists) {
+                break;
+            }
 
             $case_id = generate_case_id();
             $tries++;
@@ -69,8 +66,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $message = "Could not generate a unique Case ID. Try again.";
             $message_type = "error";
         } else {
-
-            // Insert report (Case ID is stored in DB, but not shown on page)
             $sql = "INSERT INTO bullying_reports
             (case_id, owner_student_id, student_id, is_anonymous,
              incident_type, severity, occurrence_datetime, location, description)
@@ -78,10 +73,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $stmt = $conn->prepare($sql);
 
-            $owner_student_id  = $student_id;                 // always saved for ownership
-            $public_student_id = $is_anonymous ? null : $student_id; // NULL if anonymous
+            $owner_student_id  = $student_id;
+            $public_student_id = $is_anonymous ? null : $student_id;
 
-            // NOTE: if your student_id columns allow NULL, this is OK
             $stmt->bind_param(
                 "siiisssss",
                 $case_id,
@@ -99,16 +93,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $report_id = $stmt->insert_id;
             $stmt->close();
 
-            // Evidence upload (optional)
             if (!empty($_FILES["evidence"]) && !empty($_FILES["evidence"]["name"][0])) {
-
                 $upload_dir = __DIR__ . "/uploads/";
                 if (!is_dir($upload_dir)) {
                     mkdir($upload_dir, 0755, true);
                 }
 
                 $allowed_mimes = ["image/jpeg","image/png","image/webp"];
-                $max_size = 3 * 1024 * 1024; // 3MB each
+                $max_size = 3 * 1024 * 1024;
 
                 $count = count($_FILES["evidence"]["name"]);
                 for ($i = 0; $i < $count; $i++) {
@@ -152,9 +144,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
-            // ✅ Show only this message on top (form remains visible)
             $message = "Report submitted successfully!";
             $message_type = "success";
+            $show_success_dialog = true;
         }
     }
 }
@@ -165,7 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Submit Report | SBMS</title>
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/student_report.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -191,30 +183,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <div class="hero">
   <div class="container">
-
     <div class="card">
       <h2>Submit a Bullying Report</h2>
-      <p style="color:var(--muted); margin-top:6px; line-height:1.6;">
-        Fill in the details carefully. You can submit anonymously.
-      </p>
+      <p>Fill in the details carefully. You can submit anonymously.</p>
 
-      <!-- ✅ Message shown on top of the form -->
-      <?php if ($message): ?>
-        <div class="alert <?php echo htmlspecialchars($message_type); ?>" style="margin-top:12px;">
+      <?php if ($message_type === "error"): ?>
+        <div class="alert error">
           <?php echo htmlspecialchars($message); ?>
         </div>
       <?php endif; ?>
 
-      <form method="POST" enctype="multipart/form-data" style="margin-top:14px;">
+      <form method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token()); ?>">
 
-        <label style="display:block; margin-top:10px;">
-          <input type="checkbox" name="is_anonymous" value="1">
-          Submit anonymously (your identity will not be attached)
-        </label>
+        <div class="anonymous-row">
+          <input type="checkbox" id="is_anonymous" name="is_anonymous" value="1">
+          <label for="is_anonymous">Submit anonymously (your identity will not be attached)</label>
+        </div>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Incident Type</label>
-        <select name="incident_type" required style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
+        <label for="incident_type">Incident Type</label>
+        <select id="incident_type" name="incident_type" required>
           <option value="">Select type</option>
           <option value="physical">Physical</option>
           <option value="verbal">Verbal</option>
@@ -223,35 +211,60 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <option value="other">Other</option>
         </select>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Severity Level</label>
-        <select name="severity" required style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
+        <label for="severity">Severity Level</label>
+        <select id="severity" name="severity" required>
           <option value="">Select severity</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Date & Time of Occurrence</label>
-        <input type="datetime-local" name="occurrence_datetime" required style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
+        <label for="occurrence_datetime">Date & Time of Occurrence</label>
+        <input type="datetime-local" id="occurrence_datetime" name="occurrence_datetime" required>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Location</label>
-        <input type="text" name="location" required placeholder="Playground, washroom, corridor..."
-               style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" placeholder="Playground, washroom, corridor..." required>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Detailed Description</label>
-        <textarea name="description" required rows="5"
-          placeholder="Describe what happened, who was involved, and any important details..."
-          style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(15,23,42,0.12);"></textarea>
+        <label for="description">Detailed Description</label>
+        <textarea id="description" name="description" rows="5" placeholder="Describe what happened, who was involved, and any important details..." required></textarea>
 
-        <label style="display:block; margin-top:12px; font-weight:700;">Evidence Upload (optional)</label>
-        <input type="file" name="evidence[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+        <label for="evidence">Evidence Upload (optional)</label>
+        <input type="file" id="evidence" name="evidence[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
 
-        <button class="btn primary" type="submit" style="margin-top:14px;">Submit Report</button>
+        <div class="small-note">
+          You may upload JPG, PNG, or WEBP files. Maximum 3MB per image.
+        </div>
+
+        <button class="btn primary submit-btn" type="submit">Submit Report</button>
       </form>
     </div>
 
+    <div class="footer">Privacy &amp; Safety · SBMS</div>
   </div>
 </div>
+
+<?php if ($show_success_dialog): ?>
+<div class="dialog-backdrop" id="successDialog">
+  <div class="dialog-box">
+    <div class="dialog-icon">✓</div>
+    <h3>Success</h3>
+    <p><?php echo htmlspecialchars($message); ?></p>
+    <div class="dialog-note">Redirecting to dashboard...</div>
+  </div>
+</div>
+
+<script>
+window.addEventListener("load", function () {
+  var dialog = document.getElementById("successDialog");
+  if (dialog) {
+    dialog.style.display = "flex";
+    setTimeout(function () {
+      window.location.href = "student_dashboard.php";
+    }, 2000);
+  }
+});
+</script>
+<?php endif; ?>
 
 </body>
 </html>
