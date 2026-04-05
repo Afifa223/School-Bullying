@@ -8,7 +8,7 @@ require "db.php";
 $student_id = current_user_id();
 
 /**
- * Status pipeline (teacher will update later)
+ * Status pipeline
  */
 function status_steps(): array {
   return [
@@ -74,10 +74,24 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
   }
 
   // Only owner_student_id can view
-  $stmt = $conn->prepare("SELECT report_id, case_id, incident_type, severity, occurrence_datetime, location, description, status, submitted_at
-                          FROM bullying_reports
-                          WHERE case_id = ? AND owner_student_id = ?
-                          LIMIT 1");
+  $stmt = $conn->prepare("
+    SELECT 
+      br.report_id,
+      br.case_id,
+      br.incident_type,
+      br.severity,
+      br.occurrence_datetime,
+      br.location,
+      br.description,
+      br.status,
+      br.submitted_at,
+      br.teacher_note,
+      t.full_name AS assigned_teacher
+    FROM bullying_reports br
+    LEFT JOIN teachers t ON t.teacher_id = br.assigned_teacher_id
+    WHERE br.case_id = ? AND br.owner_student_id = ?
+    LIMIT 1
+  ");
   $stmt->bind_param("si", $case_id, $student_id);
   $stmt->execute();
   $case = $stmt->get_result()->fetch_assoc();
@@ -88,16 +102,27 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
     exit;
   }
 
-  $ev = $conn->prepare("SELECT file_name, original_name, uploaded_at
-                        FROM report_evidence
-                        WHERE report_id = ?
-                        ORDER BY evidence_id DESC");
+  $ev = $conn->prepare("
+    SELECT file_name, original_name, uploaded_at
+    FROM report_evidence
+    WHERE report_id = ?
+    ORDER BY evidence_id DESC
+  ");
   $ev->bind_param("i", $case["report_id"]);
   $ev->execute();
   $evidence = $ev->get_result()->fetch_all(MYSQLI_ASSOC);
   $ev->close();
 
   $status = $case["status"] ?: "submitted";
+  $teacherName = trim((string)($case["assigned_teacher"] ?? ""));
+
+  $statusLabel = status_steps()[$status] ?? "Submitted";
+
+  if ($status === "seen" && $teacherName !== "") {
+    $statusLabel = "Seen by Teacher ($teacherName)";
+  } elseif ($status === "under-review" && $teacherName !== "") {
+    $statusLabel = "Under Review by Teacher ($teacherName)";
+  }
 
   echo json_encode([
     "ok" => true,
@@ -105,7 +130,7 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
       "title" => generate_title($case),
       "case_id" => $case["case_id"],
       "status" => $status,
-      "status_label" => status_steps()[$status] ?? "Submitted",
+      "status_label" => $statusLabel,
       "progress_percent" => progress_percent($status),
       "incident_type" => $case["incident_type"],
       "severity" => $case["severity"],
@@ -113,6 +138,8 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
       "location" => $case["location"],
       "description" => $case["description"],
       "submitted_at" => $case["submitted_at"],
+      "teacher_note" => $case["teacher_note"] ?? "",
+      "assigned_teacher" => $teacherName,
       "days_ago" => days_ago_label($case["submitted_at"]),
       "evidence" => array_map(function($e){
         return [
@@ -130,10 +157,12 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
 /**
  * Normal page: load all reports for student
  */
-$stmt = $conn->prepare("SELECT report_id, case_id, incident_type, severity, occurrence_datetime, location, description, status, submitted_at
-                        FROM bullying_reports
-                        WHERE owner_student_id = ?
-                        ORDER BY submitted_at DESC, report_id DESC");
+$stmt = $conn->prepare("
+  SELECT report_id, case_id, incident_type, severity, occurrence_datetime, location, description, status, submitted_at
+  FROM bullying_reports
+  WHERE owner_student_id = ?
+  ORDER BY submitted_at DESC, report_id DESC
+");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $reports = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -145,14 +174,13 @@ $stmt->close();
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Track Reports | SBMS</title>
-  <link rel="stylesheet" href="css/student_track.css" />
+  <link rel="stylesheet" href="css/student_track.css?v=2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<!-- NAV -->
 <div class="nav">
   <div class="container nav-inner">
     <div class="brand">
@@ -170,7 +198,6 @@ $stmt->close();
   </div>
 </div>
 
-<!-- BODY -->
 <div class="hero">
   <div class="container">
     <div class="page-head">
@@ -201,8 +228,6 @@ $stmt->close();
                   <span class="pill"><?php echo htmlspecialchars($days); ?></span>
                 </div>
               </div>
-
-              <!-- ✅ REMOVED: status badge from card -->
             </div>
 
             <div class="card-mid">
@@ -235,7 +260,6 @@ $stmt->close();
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="trackModal" aria-hidden="true">
   <div class="modal-backdrop" data-close="1"></div>
 
@@ -299,6 +323,7 @@ $stmt->close();
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('no-scroll');
   }
+
   function closeModal(){
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
@@ -352,6 +377,8 @@ $stmt->close();
         <div class="kv"><div class="k">Occurrence</div><div class="v">${escapeHtml(d.occurrence_datetime || '—')}</div></div>
         <div class="kv"><div class="k">Location</div><div class="v">${escapeHtml(d.location || '—')}</div></div>
         <div class="kv"><div class="k">Submitted At</div><div class="v">${escapeHtml(d.submitted_at || '—')}</div></div>
+        <div class="kv"><div class="k">Assigned Teacher</div><div class="v">${escapeHtml(d.assigned_teacher || '—')}</div></div>
+        <div class="kv"><div class="k">Teacher Note</div><div class="v pre">${escapeHtml(d.teacher_note || '—')}</div></div>
         <div class="kv"><div class="k">Description</div><div class="v pre">${escapeHtml(d.description || '—')}</div></div>
       `;
 
@@ -360,8 +387,10 @@ $stmt->close();
       } else {
         evidenceBox.innerHTML = d.evidence.map(ev => `
           <div class="ev-item">
-            <div class="ev-name">${escapeHtml(ev.original_name)}</div>
-            <div class="ev-sub muted">Uploaded: ${escapeHtml(ev.uploaded_at || '—')}</div>
+            <div>
+              <div class="ev-name">${escapeHtml(ev.original_name)}</div>
+              <div class="ev-sub muted">Uploaded: ${escapeHtml(ev.uploaded_at || '—')}</div>
+            </div>
             <a class="btn tiny outline" href="${ev.url}" target="_blank" rel="noopener">View</a>
           </div>
         `).join('');
@@ -372,8 +401,8 @@ $stmt->close();
 
       const keys = Object.keys(d.steps);
       const currentIndex = keys.indexOf(d.status);
+
       timeline.innerHTML = keys.map((k, i) => {
-        const label = d.steps[k];
         const state =
           i < currentIndex ? 'done' :
           i === currentIndex ? 'active' : 'todo';
@@ -382,8 +411,8 @@ $stmt->close();
           <div class="t-row ${state}">
             <div class="t-dot"></div>
             <div class="t-content">
-              <div class="t-title">${escapeHtml(label)}</div>
-              <div class="t-sub muted">${timelineHint(k, d)}</div>
+              <div class="t-title">${escapeHtml(timelineLabel(k, d))}</div>
+              <div class="t-sub muted">${escapeHtml(timelineHint(k, d))}</div>
             </div>
           </div>
         `;
@@ -396,11 +425,25 @@ $stmt->close();
     }
   }
 
+  function timelineLabel(statusKey, d){
+    if (statusKey === 'seen' && d.assigned_teacher) {
+      return `Seen by Teacher (${d.assigned_teacher})`;
+    }
+    if (statusKey === 'under-review' && d.assigned_teacher) {
+      return `Under Review by Teacher (${d.assigned_teacher})`;
+    }
+    return d.steps[statusKey] || statusKey;
+  }
+
   function timelineHint(statusKey, d){
     if(statusKey === 'submitted') return `Submitted • ${d.submitted_at || '—'}`;
-    if(statusKey === 'seen') return `Waiting for teacher to view`;
-    if(statusKey === 'under-review') return `Investigation in progress`;
-     if(statusKey === 'action-taken') return `Action taken against culprit`;
+    if(statusKey === 'seen') {
+      return d.assigned_teacher ? `Seen by teacher ${d.assigned_teacher}` : `Waiting for teacher to view`;
+    }
+    if(statusKey === 'under-review') {
+      return d.assigned_teacher ? `Investigation in progress by ${d.assigned_teacher}` : `Investigation in progress`;
+    }
+    if(statusKey === 'action-taken') return `Action taken against culprit`;
     if(statusKey === 'resolved') return `Case closed`;
     return '';
   }

@@ -66,7 +66,6 @@ body{
   box-shadow:0 8px 30px rgba(0,0,0,0.05);
 }
 
-/* TABLE */
 .table{
   width:100%;
   margin-top:10px;
@@ -77,12 +76,12 @@ body{
 
 .trow{
   display:grid;
-  grid-template-columns: 
+  grid-template-columns:
     1.4fr   /* Case ID */
-    1.9fr   /* Description */
     1.4fr   /* Submitted */
-    1.5fr     /* Teacher Note */
-    1.9fr     /* Resolved */
+    1.8fr   /* Teacher Note */
+    1.5fr   /* Assigned Teacher */
+    1.4fr   /* Resolved */
     1fr;    /* Type */
   padding:16px 20px;
   align-items:center;
@@ -148,8 +147,21 @@ body{
   font-weight:600;
 }
 
-/* Responsive */
+.empty-title{
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.empty-sub{
+  color:#64748b;
+}
+
+.muted{
+  color:#64748b;
+}
+
 @media (max-width:1100px){
   .table{ overflow-x:auto; }
-  .trow{ min-width:1100px; }
+  .trow{ min-width:1000px; }
 }

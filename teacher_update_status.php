@@ -6,7 +6,7 @@ $case_id = trim($_GET["case_id"] ?? "");
 $message = "";
 $message_type = "";
 
-$allowed_status = ["submitted", "under-review", "action-taken", "resolved"];
+$allowed_status = ["submitted", "seen", "under_review", "resolved"];
 
 /**
  * Convert HTML datetime-local (YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS)
@@ -28,25 +28,24 @@ function dt_local_to_mysql(string $dt): string {
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $action = $_POST["action"] ?? "";
 
-  // ---------- UPDATE STATUS ----------
   if ($action === "update_status") {
     $case_id = trim($_POST["case_id"] ?? "");
     $new_status = trim($_POST["status"] ?? "");
-    $teacher_note = trim($_POST["teacher_note"] ?? ""); // ✅ NEW
+    $teacher_note = trim($_POST["teacher_note"] ?? "");
 
     if ($case_id === "" || !in_array($new_status, $allowed_status, true)) {
       $message = "Invalid Case ID or Status.";
       $message_type = "error";
     } else {
-      // ✅ resolved_mark should be "resolved" only if status is resolved, otherwise NULL
       $resolved_status = ($new_status === "resolved") ? "resolved" : null;
+      $assigned_teacher_id = teacher_id();
 
       $stmt = $conn->prepare("
         UPDATE bullying_reports
-        SET status = ?, teacher_note = ?, resolved_status = ?
+        SET status = ?, teacher_note = ?, resolved_status = ?, assigned_teacher_id = ?
         WHERE case_id = ?
       ");
-      $stmt->bind_param("ssss", $new_status, $teacher_note, $resolved_status, $case_id);
+      $stmt->bind_param("sssis", $new_status, $teacher_note, $resolved_status, $assigned_teacher_id, $case_id);
       $stmt->execute();
       $stmt->close();
 
@@ -55,7 +54,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
   }
 
-  // ---------- SAVE REMINDER ----------
   if ($action === "save_reminder") {
     $case_id = trim($_POST["case_id"] ?? "");
     $followup_local = trim($_POST["followup_datetime"] ?? "");
@@ -111,7 +109,6 @@ teacher_header("", "Update Status | SBMS");
         <div class="alert <?php echo e($message_type); ?>"><?php echo e($message); ?></div>
       <?php endif; ?>
 
-      <!-- ===================== STATUS FORM ===================== -->
       <div class="card wide" style="margin-top:14px;">
         <h3>Update Status</h3>
 
@@ -132,11 +129,9 @@ teacher_header("", "Update Status | SBMS");
             </select>
           </div>
 
-          <!-- ✅ NEW: Teacher note for status update -->
           <div class="field">
             <label>Teacher Note (optional)</label>
-            <textarea name="teacher_note" rows="3"
-              placeholder="Write notes for the student (shown in My Reports)..."></textarea>
+            <textarea name="teacher_note" rows="3" placeholder="Write notes for the student (shown in My Reports)..."></textarea>
           </div>
 
           <div class="card-actions">
@@ -146,7 +141,6 @@ teacher_header("", "Update Status | SBMS");
         </form>
       </div>
 
-      <!-- ===================== REMINDER FORM ===================== -->
       <div class="card wide" style="margin-top:14px;">
         <h3>Add Follow-up Reminder</h3>
 

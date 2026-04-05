@@ -7,17 +7,18 @@ require "db.php";
 
 $student_id = current_user_id();
 
-function preview_text(string $text, int $max = 90): string {
-  $text = trim(preg_replace('/\s+/', ' ', $text));
-  if (mb_strlen($text) <= $max) return $text;
-  return mb_substr($text, 0, $max) . "…";
-}
-
 $stmt = $conn->prepare("
-  SELECT case_id, submitted_at, is_anonymous, description, teacher_note, resolved_status
-  FROM bullying_reports
-  WHERE owner_student_id = ?
-  ORDER BY submitted_at DESC, report_id DESC
+  SELECT 
+    br.case_id,
+    br.submitted_at,
+    br.is_anonymous,
+    br.teacher_note,
+    br.resolved_status,
+    t.full_name AS assigned_teacher
+  FROM bullying_reports br
+  LEFT JOIN teachers t ON t.teacher_id = br.assigned_teacher_id
+  WHERE br.owner_student_id = ?
+  ORDER BY br.submitted_at DESC, br.report_id DESC
 ");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
@@ -30,7 +31,7 @@ $stmt->close();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>My Reports | SBMS</title>
-  <link rel="stylesheet" href="css/my_report.css?v=10">
+  <link rel="stylesheet" href="css/my_report.css?v=11">
 </head>
 <body>
 
@@ -56,7 +57,7 @@ $stmt->close();
 
     <div class="page-head">
       <h1>My Reports</h1>
-      <p class="muted">Here are your submitted reports with teacher notes and resolution info.</p>
+      <p class="muted">Here are your submitted reports with teacher notes, assigned teacher, and resolution info.</p>
     </div>
 
     <div class="card">
@@ -70,55 +71,47 @@ $stmt->close();
 
         <div class="table">
 
-          <!-- HEADER -->
           <div class="trow thead">
             <div>Case ID</div>
-            <div>Description (Preview)</div>
             <div>Submitted</div>
             <div>Teacher Note</div>
+            <div>Assigned Teacher</div>
             <div>Resolved Status</div>
             <div>Type</div>
           </div>
 
-          <!-- BODY -->
           <?php foreach ($reports as $r): ?>
-
             <?php
               $isAnon = (int)$r["is_anonymous"] === 1;
               $typeLabel = $isAnon ? "Anonymous" : "Standard";
               $typeClass = $isAnon ? "type-anon" : "type-norm";
               $teacherNote = trim((string)$r["teacher_note"]);
               $resolvedStatus = trim((string)$r["resolved_status"]);
+              $assignedTeacher = trim((string)($r["assigned_teacher"] ?? ""));
             ?>
 
             <div class="trow tbody">
 
-              <!-- 1 Case ID -->
               <div class="caseid">
                 <?php echo htmlspecialchars($r["case_id"]); ?>
               </div>
 
-              <!-- 2 Description -->
-              <div>
-                <?php echo htmlspecialchars(preview_text($r["description"],110)); ?>
-              </div>
-
-              <!-- 3 Submitted -->
               <div>
                 <?php echo htmlspecialchars($r["submitted_at"]); ?>
               </div>
 
-              <!-- 4 Teacher Note -->
               <div>
                 <?php echo htmlspecialchars($teacherNote !== "" ? $teacherNote : "—"); ?>
               </div>
 
-              <!-- 5 Resolved Status -->
+              <div>
+                <?php echo htmlspecialchars($assignedTeacher !== "" ? $assignedTeacher : "—"); ?>
+              </div>
+
               <div class="resolved">
                 <?php echo htmlspecialchars($resolvedStatus !== "" ? $resolvedStatus : ""); ?>
               </div>
 
-              <!-- 6 Type -->
               <div>
                 <span class="type <?php echo $typeClass; ?>">
                   <?php echo htmlspecialchars($typeLabel); ?>
