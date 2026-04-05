@@ -27,7 +27,12 @@ if ($case_id !== "") {
   $stmt->close();
 
   if ($case) {
-    $stmt = $conn->prepare("SELECT file_name, original_name FROM report_evidence WHERE report_id = ? ORDER BY uploaded_at DESC");
+    $stmt = $conn->prepare("
+      SELECT file_name, original_name
+      FROM report_evidence
+      WHERE report_id = ?
+      ORDER BY uploaded_at DESC
+    ");
     $stmt->bind_param("i", $case["report_id"]);
     $stmt->execute();
     $evidence = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -73,7 +78,7 @@ if ($case_id !== "") {
 
         <div class="card-actions">
           <a class="btn outline" href="teacher_update_status.php?case_id=<?php echo urlencode($case["case_id"]); ?>">Update Status</a>
-          <a class="btn outline" href="teacher_reminders.php?case_id=<?php echo urlencode($case["case_id"]); ?>">Add Reminder</a>
+          <a class="btn outline" href="teacher_update_status.php?case_id=<?php echo urlencode($case["case_id"]); ?>">Add Reminder</a>
         </div>
       </div>
 
