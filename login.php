@@ -13,7 +13,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email_value = $email;
 
     if ($email === "" || $password === "") {
-
         $message = "All fields are required.";
         $message_type = "error";
     } else {
@@ -34,7 +33,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ];
             header("Location: admin_dashboard.php");
             exit;
-
         }
 
         // ================= TEACHER LOGIN =================
@@ -48,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION["role"] = "teacher";
             $_SESSION["user"] = [
                 "id" => (int)$teacher["teacher_id"],
-                "name" => $teacher["email"], // no name column in teachers table
+                "name" => $teacher["email"],
                 "email" => $teacher["email"]
             ];
             header("Location: teacher_dashboard.php");
@@ -56,7 +54,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         // ================= STUDENT LOGIN =================
-        $stmt = $conn->prepare("SELECT student_id, first_name, last_name, email, password FROM student WHERE email = ?");        $stmt->bind_param("s", $email);
+        $stmt = $conn->prepare("SELECT student_id, first_name, last_name, email, password FROM student WHERE email = ?");
+        $stmt->bind_param("s", $email);
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc();
         $stmt->close();
@@ -85,49 +84,58 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>SBMS | Login</title>
 
-  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Your existing theme -->
-  <link rel="stylesheet" href="css/login.css?v=2" />
+  <link rel="stylesheet" href="css/login.css?v=20" />
 </head>
 <body>
 
- 
+<div class="bg-overlay"></div>
+
 <div class="page">
-<header class="page-header">
-  <h1 class="system-title">School Bullying Management System</h1>
-  <h2 class="page-title">Login</h2>
-</header>
+  <header class="page-header">
+    <h1 class="system-title">School Bullying Management System</h1>
+    <h2 class="page-title">Login</h2>
+  </header>
 
-<div class="container">
-  <div class="card">
+  <div class="container">
+    <div class="card">
 
-    <?php if ($message): ?>
-      <div class="alert <?php echo htmlspecialchars($message_type); ?>">
-        <?php echo htmlspecialchars($message); ?>
-      </div>
-    <?php endif; ?>
+      <?php if ($message): ?>
+        <div class="alert <?php echo htmlspecialchars($message_type); ?>">
+          <?php echo htmlspecialchars($message); ?>
+        </div>
+      <?php endif; ?>
 
-    <form method="POST">
-      <label>Email</label>
-      <input type="email" name="email" value="<?php echo htmlspecialchars($email_value); ?>" required>
+      <form method="POST">
+        <label>Email</label>
+        <input
+          type="email"
+          name="email"
+          value="<?php echo htmlspecialchars($email_value); ?>"
+          placeholder="Enter your email"
+          required
+        >
 
-      <label>Password</label>
-      <input type="password" name="password" required>
+        <label>Password</label>
+        <input
+          type="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+        >
 
-      <button class="btn" type="submit">Login</button>
-    </form>
+        <button class="btn" type="submit">Login</button>
+      </form>
 
-    <div class="divider"><span>OR</span></div>
-    <a class="btn-outline" href="register.php">Create a new student account</a>
+      <div class="divider"><span>OR</span></div>
+      <a class="btn-outline" href="register.php">Create a new student account</a>
 
+    </div>
   </div>
 </div>
-</div>
-
 
 </body>
 </html>
