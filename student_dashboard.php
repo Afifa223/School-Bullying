@@ -7,17 +7,12 @@ require "db.php";
 
 $student_id = current_user_id();
 
-/*
- // DEBUG (optional): session id ঠিক আসছে কিনা দেখতে চাইলে uncomment করো
- // var_dump($student_id); exit;
-*/
-
 // Load student information from DB
 $stmt = $conn->prepare("
   SELECT first_name, last_name, email, admission_year, roll_number
   FROM student
   WHERE student_id = ?
-");  
+");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
@@ -52,7 +47,6 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
       <a href="student_track.php">Track</a>
       <a href="my_report.php">My Reports</a>
       <a href="help_resources.php">Help & Resources</a>
-
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -64,7 +58,7 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
 
     <!-- HERO CARD -->
     <div class="hero-card">
-      <h1>Report Bullying Safely & Privately</h1>
+      <h1>Report Bullying Safely &amp; Privately</h1>
       <p>Welcome, <strong><?php echo htmlspecialchars($name); ?></strong>.</p>
 
       <?php if ($student): ?>
@@ -75,9 +69,9 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
         </div>
       <?php endif; ?>
 
-      <!-- Feature Slider (Advertisement Style) -->
-      <div class="feature-slider" aria-label="SBMS features slider">
-        <div class="feature-track">
+      <!-- Static Featured Cards -->
+      <div class="feature-section" aria-label="SBMS features">
+        <div class="feature-grid">
 
           <div class="feature-card" style="background-image:url('https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=60');">
             <div class="feature-overlay"></div>
@@ -99,14 +93,6 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
             <div class="feature-title">Support Resources</div>
           </div>
 
-        </div>
-
-        <!-- Dots -->
-        <div class="feature-dots" aria-hidden="true">
-          <span class="dot active"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
         </div>
       </div>
     </div>
@@ -139,7 +125,7 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
       </div>
 
       <div class="card">
-        <h3>Help & Resources</h3>
+        <h3>Help &amp; Resources</h3>
         <p>Emergency contacts, counselling info, and tips for safety.</p>
         <div class="card-action">
           <a class="btn outline full" href="help_resources.php">View</a>
@@ -147,58 +133,10 @@ $name = $student ? ($student["first_name"] . " " . $student["last_name"]) : curr
       </div>
     </div>
 
-    <div class="footer">Privacy & Safety · SBMS</div>
+    <div class="footer">Privacy &amp; Safety · SBMS</div>
 
   </div>
 </div>
-
-<!-- Slider JS -->
-<script>
-(function(){
-  const track = document.querySelector('.feature-track');
-  const cards = document.querySelectorAll('.feature-card');
-  const dots  = document.querySelectorAll('.feature-dots .dot');
-  const slider = document.querySelector('.feature-slider');
-
-  if(!track || cards.length === 0) return;
-
-  let index = 0;
-  const gap = 12;
-
-  function slideTo(i){
-    index = i;
-    const cardWidth = cards[0].getBoundingClientRect().width;
-    const x = (cardWidth + gap) * index;
-    track.style.transform = `translateX(${-x}px)`;
-
-    dots.forEach(d => d.classList.remove('active'));
-    if(dots[index]) dots[index].classList.add('active');
-  }
-
-  // Auto slide
-  let timer = setInterval(() => {
-    const maxIndex = cards.length - 1;
-    slideTo(index >= maxIndex ? 0 : index + 1);
-  }, 2500);
-
-  // Pause on hover
-  if(slider){
-    slider.addEventListener('mouseenter', () => clearInterval(timer));
-    slider.addEventListener('mouseleave', () => {
-      timer = setInterval(() => {
-        const maxIndex = cards.length - 1;
-        slideTo(index >= maxIndex ? 0 : index + 1);
-      }, 2500);
-    });
-  }
-
-  // Click dots
-  dots.forEach((dot, i) => dot.addEventListener('click', () => slideTo(i)));
-
-  // Start
-  slideTo(0);
-})();
-</script>
 
 </body>
 </html>
