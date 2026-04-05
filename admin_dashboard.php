@@ -52,10 +52,21 @@ try {
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.05);
       margin-top: 10px;
+      align-items: center;
     }
     .mini-item b{ color: rgba(255,255,255,0.92); }
     .mini-item small{ color: rgba(255,255,255,0.62); }
     .mini-right{ text-align:right; }
+
+    @media (max-width: 768px){
+      .mini-item{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .mini-right{
+        text-align:left;
+      }
+    }
   </style>
 </head>
 
@@ -72,7 +83,6 @@ try {
       <a href="admin_dashboard.php" class="active">Dashboard</a>
       <a href="add_teacher.php">Add Teacher</a>
       <a href="admin_teachers_list.php">Teachers</a>
-      <a href="admin_teacher_progress.php">Progress</a>
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -84,7 +94,7 @@ try {
     <div class="hero-card admin-hero">
       <div>
         <h1>Admin Control Center</h1>
-        <p>Welcome, <strong><?php echo $name; ?></strong>. Manage teacher accounts, monitor activity and keep the system running smoothly.</p>
+        <p>Welcome, <strong><?php echo htmlspecialchars($name); ?></strong>. Manage teacher accounts, monitor activity and keep the system running smoothly.</p>
       </div>
 
       <div class="stat">
@@ -115,11 +125,11 @@ try {
 
       <div class="card admin-card">
         <div class="card-top">
-          <h3>Teacher Progress</h3>
-          <span class="chip">Reports</span>
+          <h3>Latest Teacher Account</h3>
+          <span class="chip">New</span>
         </div>
-        <p>Review performance and case-handling progress.</p>
-        <a class="btn primary full" href="admin_teacher_progress.php">Open</a>
+        <p>Open the latest teacher account to view full details.</p>
+        <a class="btn primary full" href="latest_teacher.php">Open</a>
       </div>
     </div>
 
@@ -139,7 +149,7 @@ try {
                 <small><?php echo htmlspecialchars($t["email"]); ?></small>
               </div>
               <div class="mini-right">
-                <small><?php echo htmlspecialchars($t["created_at"]); ?></small>
+                <small><?php echo date("d M Y, h:i A", strtotime($t["created_at"])); ?></small>
               </div>
             </div>
           <?php endforeach; ?>
@@ -148,7 +158,6 @@ try {
 
       <div class="admin-actions" style="margin-top:14px;">
         <a class="btn outline" href="remove_teacher.php">Remove Teacher</a>
-        <a class="btn outline" href="admin_teacher_progress.php">View Reports</a>
       </div>
     </div>
 
