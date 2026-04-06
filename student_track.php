@@ -12,11 +12,11 @@ $student_id = current_user_id();
  */
 function status_steps(): array {
   return [
-    "submitted"    => "Submitted",
-    "seen"         => "Seen by Teacher",
-    "under-review" => "Under Review",
-    "action-taken" => "Action Taken",
-    "resolved"     => "Resolved"
+    "submitted"     => "Submitted",
+    "seen"          => "Seen by Teacher",
+    "under_review"  => "Under Review",
+    "action_taken"  => "Action Taken",
+    "resolved"      => "Resolved"
   ];
 }
 
@@ -119,10 +119,10 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "1") {
   $statusLabel = status_steps()[$status] ?? "Submitted";
 
   if ($status === "seen" && $teacherName !== "") {
-    $statusLabel = "Seen by Teacher ($teacherName)";
-  } elseif ($status === "under-review" && $teacherName !== "") {
-    $statusLabel = "Under Review by Teacher ($teacherName)";
-  }
+  $statusLabel = "Seen by Teacher ($teacherName)";
+} elseif ($status === "under_review" && $teacherName !== "") {
+  $statusLabel = "Under Review by Teacher ($teacherName)";
+}
 
   echo json_encode([
     "ok" => true,
@@ -429,9 +429,9 @@ $stmt->close();
     if (statusKey === 'seen' && d.assigned_teacher) {
       return `Seen by Teacher (${d.assigned_teacher})`;
     }
-    if (statusKey === 'under-review' && d.assigned_teacher) {
-      return `Under Review by Teacher (${d.assigned_teacher})`;
-    }
+    if (statusKey === 'under_review' && d.assigned_teacher) {
+  return `Under Review by Teacher (${d.assigned_teacher})`;
+}
     return d.steps[statusKey] || statusKey;
   }
 
@@ -440,10 +440,10 @@ $stmt->close();
     if(statusKey === 'seen') {
       return d.assigned_teacher ? `Seen by teacher ${d.assigned_teacher}` : `Waiting for teacher to view`;
     }
-    if(statusKey === 'under-review') {
-      return d.assigned_teacher ? `Investigation in progress by ${d.assigned_teacher}` : `Investigation in progress`;
-    }
-    if(statusKey === 'action-taken') return `Action taken against culprit`;
+   if(statusKey === 'under_review') {
+  return d.assigned_teacher ? `Investigation in progress by ${d.assigned_teacher}` : `Investigation in progress`;
+}
+if(statusKey === 'action_taken') return `Action taken against culprit`;
     if(statusKey === 'resolved') return `Case closed`;
     return '';
   }

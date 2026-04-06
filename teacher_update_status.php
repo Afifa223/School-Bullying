@@ -6,7 +6,7 @@ $case_id = trim($_GET["case_id"] ?? "");
 $message = "";
 $message_type = "";
 
-$allowed_status = ["submitted", "seen", "under_review", "resolved"];
+$allowed_status = ["submitted", "seen", "under_review", "action_taken", "resolved"];
 
 /**
  * Convert HTML datetime-local (YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS)

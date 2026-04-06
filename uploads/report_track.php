@@ -15,10 +15,11 @@ if ($case_id === "") {
 
 function status_steps(): array {
   return [
-    "submitted" => "Submitted",
-    "seen" => "Seen by Teacher",
-    "under_review" => "Under Review",
-    "resolved" => "Resolved",
+    "submitted"     => "Submitted",
+    "seen"          => "Seen by Teacher",
+    "under_review"  => "Under Review",
+    "action_taken"  => "Action Taken",
+    "resolved"      => "Resolved",
   ];
 }
 
@@ -160,12 +161,13 @@ $statusLabel = $steps[$status] ?? "Submitted";
                 <div class="t-sub">
                   <?php
                     echo match ($k) {
-                      "submitted" => "Your report has been submitted successfully.",
-                      "seen" => "Teacher will review your report soon.",
-                      "under_review" => "Investigation/verification is in progress.",
-                      "resolved" => "Case has been resolved and closed.",
-                      default => ""
-                    };
+  "submitted" => "Your report has been submitted successfully.",
+  "seen" => "Teacher has viewed your report.",
+  "under_review" => "Investigation/verification is in progress.",
+  "action_taken" => "Action has been taken.",
+  "resolved" => "Case has been resolved and closed.",
+  default => ""
+};
                   ?>
                 </div>
               </div>
