@@ -5,6 +5,7 @@ teacher_require_login();
 $case_id = trim($_GET["case_id"] ?? "");
 $message = "";
 $message_type = "";
+$show_pdf_button = false;
 
 $allowed_status = ["submitted", "seen", "under_review", "action_taken", "resolved"];
 
@@ -37,20 +38,52 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $message = "Invalid Case ID or Status.";
       $message_type = "error";
     } else {
-      $resolved_status = ($new_status === "resolved") ? "resolved" : null;
       $assigned_teacher_id = teacher_id();
 
       $stmt = $conn->prepare("
-        UPDATE bullying_reports
-        SET status = ?, teacher_note = ?, resolved_status = ?, assigned_teacher_id = ?
+        SELECT report_id, status
+        FROM bullying_reports
         WHERE case_id = ?
+        LIMIT 1
       ");
-      $stmt->bind_param("sssis", $new_status, $teacher_note, $resolved_status, $assigned_teacher_id, $case_id);
+      $stmt->bind_param("s", $case_id);
       $stmt->execute();
+      $report = $stmt->get_result()->fetch_assoc();
       $stmt->close();
 
-      $message = "Status updated successfully.";
-      $message_type = "success";
+      if (!$report) {
+        $message = "Case not found.";
+        $message_type = "error";
+      } else {
+        $report_id = (int)$report["report_id"];
+        $old_status = trim((string)($report["status"] ?? "submitted"));
+        $resolved_status = ($new_status === "resolved") ? "resolved" : null;
+
+        $stmt = $conn->prepare("
+          UPDATE bullying_reports
+          SET status = ?, teacher_note = ?, resolved_status = ?, assigned_teacher_id = ?
+          WHERE case_id = ?
+        ");
+        $stmt->bind_param("sssis", $new_status, $teacher_note, $resolved_status, $assigned_teacher_id, $case_id);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $conn->prepare("
+          INSERT INTO case_status_history
+          (report_id, case_id, teacher_id, old_status, new_status, teacher_note)
+          VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("isisss", $report_id, $case_id, $assigned_teacher_id, $old_status, $new_status, $teacher_note);
+        $stmt->execute();
+        $stmt->close();
+
+        $message = "Status updated successfully.";
+        $message_type = "success";
+
+        if ($new_status === "resolved") {
+          $show_pdf_button = true;
+        }
+      }
     }
   }
 
@@ -107,6 +140,18 @@ teacher_header("", "Update Status | SBMS");
 
       <?php if ($message): ?>
         <div class="alert <?php echo e($message_type); ?>"><?php echo e($message); ?></div>
+      <?php endif; ?>
+
+      <?php if ($show_pdf_button && $case_id !== ""): ?>
+        <div class="card wide" style="margin-top:14px; border:2px solid #16a34a;">
+          <h3>Case Resolved</h3>
+          <p>You can now generate the PDF containing the student's report and teacher resolution work.</p>
+          <div class="card-actions">
+            <a class="btn primary" href="generate_case_pdf.php?case_id=<?php echo urlencode($case_id); ?>">
+              Generate & Download PDF
+            </a>
+          </div>
+        </div>
       <?php endif; ?>
 
       <div class="card wide" style="margin-top:14px;">
@@ -197,7 +242,7 @@ teacher_header("", "Update Status | SBMS");
       return;
     }
 
-    okMsg.textContent = "Date/time confirmed ✅";
+    okMsg.textContent = "Date/time confirmed";
     okMsg.style.color = "#16a34a";
     note.disabled = false;
     saveBtn.disabled = false;
