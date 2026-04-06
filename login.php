@@ -118,15 +118,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           placeholder="Enter your email"
           required
         >
+<label>Password</label>
+<div class="password-field">
+  <input
+    type="password"
+    name="password"
+    id="loginPassword"
+    placeholder="Enter your password"
+    required
+  >
 
-        <label>Password</label>
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter your password"
-          required
-        >
-
+  <span class="toggle-password" onclick="togglePassword('loginPassword', this)">
+    <!-- Eye Icon -->
+    <svg viewBox="0 0 24 24" class="eye-icon">
+      <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+    </svg>
+  </span>
+</div>
         <button class="btn" type="submit">Login</button>
       </form>
 
@@ -136,6 +144,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
   </div>
 </div>
+<script>
+function togglePassword(id, btn) {
+  const input = document.getElementById(id);
+  const svg = btn.querySelector(".eye-icon");
 
+  if (input.type === "password") {
+    input.type = "text";
+    svg.innerHTML = '<path d="M2 2l20 20M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.7 10.7 0 0 1 12 4c7 0 10 8 10 8a18.9 18.9 0 0 1-4 5.1M6.1 6.1A19 19 0 0 0 2 12s3 8 10 8a10.7 10.7 0 0 0 5.2-1.3"/>';
+  } else {
+    input.type = "password";
+    svg.innerHTML = '<path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>';
+  }
+}
+</script>
 </body>
 </html>

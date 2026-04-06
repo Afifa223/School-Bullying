@@ -157,22 +157,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           required
         >
 
-        <label>Password</label>
-        <input
-          type="password"
-          name="password"
-          placeholder="Create your password"
-          required
-        >
+       <label>Password</label>
+<div class="password-field">
+  <input
+    type="password"
+    name="password"
+    id="regPassword"
+    placeholder="Create your password"
+    required
+  >
 
-        <label>Confirm Password</label>
-        <input
-          type="password"
-          name="confirm_password"
-          placeholder="Confirm your password"
-          required
-        >
+  <span class="toggle-password" onclick="togglePassword('regPassword', this)">
+    <svg viewBox="0 0 24 24" class="eye-icon">
+      <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+    </svg>
+  </span>
+</div>
 
+<label>Confirm Password</label>
+<div class="password-field">
+  <input
+    type="password"
+    name="confirm_password"
+    id="confirmPassword"
+    placeholder="Confirm your password"
+    required
+  >
+
+  <span class="toggle-password" onclick="togglePassword('confirmPassword', this)">
+    <svg viewBox="0 0 24 24" class="eye-icon">
+      <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+    </svg>
+  </span>
+</div>
         <button class="btn" type="submit">Create Account</button>
       </form>
     </div>
@@ -201,6 +218,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     });
   </script>
 <?php endif; ?>
+<script>
+function togglePassword(id, el) {
+  const input = document.getElementById(id);
+  const svg = el.querySelector("svg");
 
+  if (input.type === "password") {
+    input.type = "text";
+
+    // eye-off icon
+    svg.innerHTML = `
+      <path d="M17.94 17.94A10.92 10.92 0 0 1 12 19c-7 0-10-7-10-7a21.77 21.77 0 0 1 5.06-6.94M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 10 7 10 7a21.77 21.77 0 0 1-3.06 4.28M1 1l22 22"/>
+    `;
+  } else {
+    input.type = "password";
+
+    // normal eye
+    svg.innerHTML = `
+      <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+    `;
+  }
+}
+</script>
 </body>
 </html>

@@ -285,3 +285,94 @@ input:focus{
     transform: scale(1);
   }
 }
+.password-field{
+  position: relative;
+}
+
+.password-field input{
+  width: 100%;
+  padding-right: 40px;
+}
+
+.toggle-password{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  opacity: 0.7;
+}
+
+.toggle-password:hover{
+  opacity: 1;
+}
+.password-field{
+  position: relative;
+}
+
+.password-field input{
+  width: 100%;
+  padding-right: 42px;
+}
+
+.toggle-password{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-icon{
+  width: 20px;
+  height: 20px;
+  fill: #64748b;
+  transition: 0.2s;
+}
+
+.toggle-password:hover .eye-icon{
+  fill: #2563eb;
+}
+.password-field{
+  position: relative;
+}
+
+.password-field input{
+  width: 100%;
+  padding-right: 48px;
+}
+
+.toggle-password{
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.eye-icon{
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #64748b;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toggle-password:hover .eye-icon{
+  stroke: #2563eb;
+}
