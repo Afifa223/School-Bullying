@@ -35,7 +35,7 @@ try {
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Admin Dashboard | SBMS</title>
 
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin.css?v=3">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,6 +83,7 @@ try {
       <a href="admin_dashboard.php" class="active">Dashboard</a>
       <a href="add_teacher.php">Add Teacher</a>
       <a href="admin_teachers_list.php">Teachers</a>
+      <a href="teacher_progress.php">Teacher Progress</a>
       <a class="btn outline" href="logout.php">Logout</a>
     </div>
   </div>
@@ -130,6 +131,15 @@ try {
         </div>
         <p>Open the latest teacher account to view full details.</p>
         <a class="btn primary full" href="latest_teacher.php">Open</a>
+      </div>
+
+      <div class="card admin-card">
+        <div class="card-top">
+          <h3>Teacher Progress</h3>
+          <span class="chip">Progress</span>
+        </div>
+        <p>See the percentage progress of each assigned teacher based on case updates.</p>
+        <a class="btn primary full" href="teacher_progress.php">Open</a>
       </div>
     </div>
 
